@@ -7,7 +7,6 @@ import {
   ArrowDownUp, ShieldAlert, Layers, CandlestickChart, Eye, EyeOff, ArrowLeft, FileSpreadsheet, RefreshCw
 } from 'lucide-react';
 import TradingViewWidget from '../components/TradingViewWidget';
-import { API_BASE } from '../api.js';
 
 // ==========================
 // DEFAULT STATE (0.00, Empty, Zero)
@@ -83,7 +82,7 @@ export default function Dashboard({ onLogout }) {
     const token = localStorage.getItem('grayscale_token');
     if (!token) return;
     try {
-      const res = await fetch(`${API_BASE}/api/auth/me`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await fetch('/api/auth/me', { headers: { 'Authorization': `Bearer ${token}` } });
       if (res.ok) {
         const data = await res.json();
         const userData = data.user;
@@ -110,7 +109,7 @@ export default function Dashboard({ onLogout }) {
     const token = localStorage.getItem('grayscale_token');
     if (!token) return;
     try {
-      const res = await fetch(`${API_BASE}/api/assets`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await fetch('/api/assets', { headers: { 'Authorization': `Bearer ${token}` } });
       if (res.ok) {
         const data = await res.json();
         const assetsData = data.assets.map(a => ({
@@ -130,7 +129,7 @@ export default function Dashboard({ onLogout }) {
     const token = localStorage.getItem('grayscale_token');
     if (!token) return;
     try {
-      const res = await fetch(`${API_BASE}/api/transactions`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await fetch('/api/transactions', { headers: { 'Authorization': `Bearer ${token}` } });
       if (res.ok) {
         const data = await res.json();
         const mapped = (data.transactions || []).map(t => ({
@@ -151,7 +150,7 @@ export default function Dashboard({ onLogout }) {
     const token = localStorage.getItem('grayscale_token');
     if (!token) return;
     try {
-      const res = await fetch(`${API_BASE}/api/investments`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await fetch('/api/investments', { headers: { 'Authorization': `Bearer ${token}` } });
       if (res.ok) {
         const data = await res.json();
         const mapped = (data.investments || []).map(inv => ({
@@ -273,7 +272,7 @@ export default function Dashboard({ onLogout }) {
     setSubmitLoading(true);
     try {
       const token = localStorage.getItem('grayscale_token');
-      const res = await fetch(`${API_BASE}/api/deposits`, {
+      const res = await fetch('/api/deposits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ amount: parseFloat(depositAmount), asset: depositAsset })
@@ -314,7 +313,7 @@ export default function Dashboard({ onLogout }) {
     setWithdrawSubmitLoading(true);
     try {
       const token = localStorage.getItem('grayscale_token');
-      const res = await fetch(`${API_BASE}/api/withdrawals`, {
+      const res = await fetch('/api/withdrawals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ amount: amt, asset: withdrawAsset, address: addr })
@@ -346,7 +345,7 @@ export default function Dashboard({ onLogout }) {
     triggerToast('Processing investment...');
     try {
       const token = localStorage.getItem('grayscale_token');
-      const res = await fetch(`${API_BASE}/api/investments/start`, {
+      const res = await fetch('/api/investments/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ asset: investAsset, amount: amt })
@@ -371,7 +370,7 @@ export default function Dashboard({ onLogout }) {
     if (!confirm('Are you sure you want to withdraw this matured investment?')) return;
     try {
       const token = localStorage.getItem('grayscale_token');
-      const res = await fetch(`${API_BASE}/api/investments/withdraw`, {
+      const res = await fetch('/api/investments/withdraw', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ investmentId: invId })
@@ -432,7 +431,7 @@ export default function Dashboard({ onLogout }) {
         </div>
       )}
 
-      {/* TOP MARQUEE TICKER */}
+      {/* TOP MARQUEE TICKER - hidden on mobile */}
       <header className="hidden md:block bg-[#09070d]/90 border-b border-white/[0.06] text-[11px] font-mono py-2 overflow-hidden sticky top-0 z-50 backdrop-blur-md">
         <div className="flex whitespace-nowrap overflow-hidden relative">
           <div className="flex w-[200%] animate-marquee hover:[animation-play-state:paused]">
@@ -456,8 +455,8 @@ export default function Dashboard({ onLogout }) {
         </div>
       </header>
 
-      <div className="flex-1 flex overflow-hidden relative">
-        {/* DESKTOP SIDEBAR */}
+      <div className="flex-1 flex overflow-hidden relative md:h-screen md:max-h-screen">
+        {/* DESKTOP SIDEBAR - hidden on mobile */}
         <aside className="w-64 bg-[#0e0b13] border-r border-white/[0.07] hidden md:flex flex-col justify-between flex-shrink-0 z-40 sticky top-0 h-[calc(100vh-33px)]">
           <div>
             <div className="p-6 border-b border-white/[0.06] flex items-center justify-between">
@@ -518,7 +517,7 @@ export default function Dashboard({ onLogout }) {
         </aside>
 
         {/* MAIN CANVAS */}
-        <div className="flex-1 flex flex-col min-w-0 h-[calc(100vh-33px)] overflow-y-auto pb-28 md:pb-8">
+        <div className="flex-1 flex flex-col min-w-0 h-[calc(100vh-33px)] overflow-y-auto pb-28 md:pb-8 w-full max-w-full">
 
           {/* TOP HEADER */}
           <header className="px-4 md:px-8 py-4 border-b border-white/[0.06] bg-[#0c0a0f]/80 backdrop-blur-xl sticky top-0 z-30 flex items-center justify-between">
@@ -531,20 +530,20 @@ export default function Dashboard({ onLogout }) {
               <div><div className="text-xs text-slate-400 font-medium flex items-center gap-1">Hi <span className="text-purple-400 font-bold">{user.firstname}</span>,</div><div className="text-sm font-extrabold text-white">Welcome Back!</div></div>
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
-              <button onClick={() => { fetchUserInfo(); fetchAssetsAndBalance(); fetchTransactionsData(); fetchInvestmentsData(); }} className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-white transition-all" title="Refresh All Data">
+              <button onClick={() => { fetchUserInfo(); fetchAssetsAndBalance(); fetchTransactionsData(); fetchInvestmentsData(); }} className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-white transition-all" title="Refresh All Data">
                 <RefreshCw className="w-4 h-4" /><span>Refresh</span>
               </button>
               <button onClick={() => switchTab('investments')} className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/20 transition-all">
                 <Lock className="w-4 h-4" /><span>7-Day Lock Active</span>
               </button>
-              {/* NOTIFICATION BUTTON WITH DROPDOWN - Responsive */}
+              {/* NOTIFICATION BUTTON WITH DROPDOWN - fixed mobile */}
               <div className="relative">
                 <button onClick={() => setNotificationsOpen(!notificationsOpen)} className="p-2.5 rounded-full bg-[#1b1526] border border-white/[0.08] text-slate-300 hover:text-white hover:bg-white/10 transition-colors relative">
                   <Bell className="w-4 h-4" />
                   {notifications.some(n => !n.read) && <span className="w-2 h-2 rounded-full bg-purple-500 absolute top-2 right-2 animate-pulse"></span>}
                 </button>
                 {notificationsOpen && (
-                  <div className="absolute right-0 top-12 w-80 md:w-96 bg-[#1d1729] border border-white/[0.08] rounded-2xl p-4 shadow-2xl z-50 max-h-96 overflow-y-auto">
+                  <div className="absolute right-0 top-12 w-80 max-w-[calc(100vw-2rem)] md:w-96 bg-[#1d1729] border border-white/[0.08] rounded-2xl p-4 shadow-2xl z-50 max-h-96 overflow-y-auto">
                     <div className="flex justify-between items-center border-b border-white/[0.08] pb-2 mb-2">
                       <h4 className="text-sm font-bold text-white">Notifications</h4>
                       <button onClick={() => setNotifications(prev => prev.map(n => ({ ...n, read: true })))} className="text-xs text-purple-400 hover:text-purple-300">Mark all read</button>

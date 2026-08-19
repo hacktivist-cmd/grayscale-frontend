@@ -110,9 +110,9 @@ export default function Layout() {
             <Link to="/login" className="hidden sm:block bg-white text-brand-purple text-xs font-extrabold uppercase px-5 py-2.5 rounded-sm hover:bg-gray-200 transition shadow-md">
               START INVESTING
             </Link>
-            {/* MOBILE HAMBURGER MENU BUTTON */}
-            <button onClick={toggleMobileMenu} className="lg:hidden p-2 text-white hover:bg-brand-purple/60 rounded-md transition">
-              <i className="fa-solid fa-bars text-xl"></i>
+            {/* MOBILE HAMBURGER MENU BUTTON - FIXED VISIBILITY */}
+            <button onClick={toggleMobileMenu} className="lg:hidden p-2 text-white hover:bg-brand-purple/60 rounded-md transition focus:outline-none">
+              <i className="fa-solid fa-bars text-2xl"></i>
             </button>
           </div>
         </div>
@@ -195,7 +195,7 @@ export default function Layout() {
         <Outlet />
       </main>
 
-      {/* FOOTER */}
+      {/* FOOTER (unchanged) */}
       <footer className="bg-white border-t border-gray-200 pt-16 pb-12 px-4 sm:px-8">
         <div className="max-w-7xl mx-auto space-y-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
