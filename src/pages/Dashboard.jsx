@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 import { 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
   LayoutDashboard, Wallet, TrendingUp, Bell, ShieldCheck, 
   Search, Repeat, Plus, Download, Clock, Zap, PieChart, Settings, 
   ArrowUpRight, ArrowDownLeft, CheckCircle2, Copy, LogOut, Save, X,
@@ -7,6 +9,7 @@ import {
   ArrowDownUp, ShieldAlert, Layers, CandlestickChart, Eye, EyeOff, ArrowLeft, FileSpreadsheet, RefreshCw
 } from 'lucide-react';
 import TradingViewWidget from '../components/TradingViewWidget';
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 // ==========================
 // DEFAULT STATE (0.00, Empty, Zero)

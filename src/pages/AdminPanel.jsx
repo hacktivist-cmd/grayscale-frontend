@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 import { 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
   LayoutDashboard, Users, ArrowUpRight, ArrowDownLeft, 
   Clock, Settings, LogOut, Search, Bell, Check, X, 
   MoreHorizontal, UserPlus, CheckCircle2, FileText, 
@@ -7,6 +9,7 @@ import {
   Eye, EyeOff, Home, ShieldCheck, Trash2, RefreshCw
 } from 'lucide-react';
 import { API_BASE } from '../api.js';
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 // ==========================
 // DEFAULT PRICES & CONFIG
