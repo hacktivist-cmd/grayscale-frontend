@@ -208,7 +208,7 @@ export default function Dashboard({ onLogout }) {
   const switchTab = (tabId) => setCurrentTab(tabId);
   const switchSettingsSubtab = (subId) => setSettingsSubtab(subId);
 
-  // -------- OTC SWAP --------
+  // -------- OTC SWAP (PERSISTENT VIA BACKEND) --------
   const calculateOtcTrade = () => {
     const sellPrice = prices[payAsset] || 1;
     const receivePrice = prices[getAsset] || 1;
@@ -229,22 +229,28 @@ export default function Dashboard({ onLogout }) {
 
     const receiveQty = (payAmount * (prices[payAsset] || 1)) / (prices[getAsset] || 1);
     
-    setAssets(prev => prev.map(a => 
-      a.id === payAsset ? { ...a, balance: a.balance - payAmount } :
-      a.id === getAsset ? { ...a, balance: a.balance + receiveQty } : a
-    ));
-
-    const newTx = {
-      id: 'tx-' + Date.now(),
-      title: `OTC Swap ${payAsset} -> ${getAsset}`,
-      date: 'Just now',
-      amount: `+${receiveQty.toFixed(4)} ${getAsset}`,
-      positive: true,
-      icon: 'repeat'
-    };
-    setTransactions(prev => [newTx, ...prev]);
-    
-    triggerToast(`OTC Trade Executed: Received ${receiveQty.toFixed(4)} ${getAsset}`);
+    try {
+      const token = localStorage.getItem('grayscale_token');
+      const res = await fetch(`${API_BASE}/api/trade`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+          payAsset,
+          getAsset,
+          payAmount,
+          receiveQty
+        })
+      });
+      if (!res.ok) throw new Error('Failed to execute trade');
+      const data = await res.json();
+      triggerToast(data.message);
+      // Refresh assets and transactions from backend
+      await fetchAssetsAndBalance();
+      await fetchTransactionsData();
+    } catch (err) {
+      console.error('Trade error:', err);
+      triggerToast(err.message);
+    }
   };
 
   // -------- DEPOSIT FLOW --------
