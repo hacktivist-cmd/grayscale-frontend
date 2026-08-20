@@ -1,5 +1,6 @@
 import { useState } from 'react';
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function Login({ onLogin }) {
   const [isLoginMode, setIsLoginMode] = useState(true);
@@ -21,7 +22,7 @@ export default function Login({ onLogin }) {
     setLoading(true);
     setError('');
 
-    const endpoint = isLoginMode ? '/api/auth/login' : '/api/auth/signup';
+    const endpoint = isLoginMode ? `${API_BASE}/api/auth/login` : `${API_BASE}/api/auth/signup`;
     const body = isLoginMode 
       ? { email: formData.email, password: formData.password }
       : { 

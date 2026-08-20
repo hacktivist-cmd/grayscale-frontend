@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react';
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 import { 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
   LayoutDashboard, Users, ArrowUpRight, ArrowDownLeft, 
   Clock, Settings, LogOut, Search, Bell, Check, X, 
   MoreHorizontal, UserPlus, CheckCircle2, FileText, 
   PieChart, TrendingUp, Shield, Lock, Repeat, ChevronDown,
   Eye, EyeOff, Home, ShieldCheck, Trash2, RefreshCw
 } from 'lucide-react';
-import { API_BASE } from '../api.js';
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 // ==========================
 // DEFAULT PRICES & CONFIG
@@ -497,20 +495,20 @@ export default function AdminPanel({ onLogout }) {
                         <tr className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                           <th className="py-4 px-5">User</th>
                           <th className="py-4 px-5">KYC</th>
-                          <th className="py-4 px-5 text-right">Wallet Balance</th>
-                          <th className="py-4 px-5 text-right">Portfolio Value</th>
+                          <th className="py-4 px-5 text-right">USDT Balance</th>
+                          <th className="py-4 px-5 text-right">Overall Net</th>
                           <th className="py-4 px-5 text-center">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/[0.04] text-xs">
                         {filteredUsers.map(u => {
-                          const portfolioValue = calculatePortfolioValue(u.assets);
+                          const totalUsd = u.walletBalance + calculatePortfolioValue(u.assets);
                           return (
                             <tr key={u.id} className="hover:bg-white/[0.02] transition-colors">
                               <td className="py-4 px-5"><div className="flex items-center gap-3"><div className="w-9 h-9 rounded-full bg-purple-600 flex items-center justify-center font-bold text-xs text-white">{u.fullname.charAt(0)}</div><div><div className="font-bold text-white">{u.fullname}</div><div className="text-[10px] text-purple-400 font-mono">{u.username}</div><div className="text-[10px] text-slate-400">{u.email}</div></div></div></td>
                               <td className="py-4 px-5"><span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${getKYCClass(u.kycStatus)}`}>{u.kycStatus}</span></td>
                               <td className="py-4 px-5 text-right font-mono text-emerald-400">${formatUSD(u.walletBalance)}</td>
-                              <td className="py-4 px-5 text-right font-mono font-bold text-purple-300">${formatUSD(portfolioValue)}</td>
+                              <td className="py-4 px-5 text-right font-mono font-bold text-purple-300">${formatUSD(totalUsd)}</td>
                               <td className="py-4 px-5 text-center">
                                 <div className="flex items-center justify-center gap-1.5">
                                   <button onClick={() => openEditModal(u)} className="px-2.5 py-1.5 rounded-xl bg-purple-500/20 text-purple-300 hover:bg-purple-500 hover:text-white transition-all text-[10px] font-bold">Edit</button>

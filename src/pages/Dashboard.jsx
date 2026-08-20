@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 import { 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
   LayoutDashboard, Wallet, TrendingUp, Bell, ShieldCheck, 
   Search, Repeat, Plus, Download, Clock, Zap, PieChart, Settings, 
   ArrowUpRight, ArrowDownLeft, CheckCircle2, Copy, LogOut, Save, X,
@@ -9,7 +7,8 @@ const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
   ArrowDownUp, ShieldAlert, Layers, CandlestickChart, Eye, EyeOff, ArrowLeft, FileSpreadsheet, RefreshCw
 } from 'lucide-react';
 import TradingViewWidget from '../components/TradingViewWidget';
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 // ==========================
 // DEFAULT STATE (0.00, Empty, Zero)
@@ -85,7 +84,7 @@ export default function Dashboard({ onLogout }) {
     const token = localStorage.getItem('grayscale_token');
     if (!token) return;
     try {
-      const res = await fetch('/api/auth/me', { headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await fetch(`${API_BASE}/api/auth/me`, { headers: { 'Authorization': `Bearer ${token}` } });
       if (res.ok) {
         const data = await res.json();
         const userData = data.user;
@@ -112,7 +111,7 @@ export default function Dashboard({ onLogout }) {
     const token = localStorage.getItem('grayscale_token');
     if (!token) return;
     try {
-      const res = await fetch('/api/assets', { headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await fetch(`${API_BASE}/api/assets`, { headers: { 'Authorization': `Bearer ${token}` } });
       if (res.ok) {
         const data = await res.json();
         const assetsData = data.assets.map(a => ({
@@ -132,7 +131,7 @@ export default function Dashboard({ onLogout }) {
     const token = localStorage.getItem('grayscale_token');
     if (!token) return;
     try {
-      const res = await fetch('/api/transactions', { headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await fetch(`${API_BASE}/api/transactions`, { headers: { 'Authorization': `Bearer ${token}` } });
       if (res.ok) {
         const data = await res.json();
         const mapped = (data.transactions || []).map(t => ({
@@ -153,7 +152,7 @@ export default function Dashboard({ onLogout }) {
     const token = localStorage.getItem('grayscale_token');
     if (!token) return;
     try {
-      const res = await fetch('/api/investments', { headers: { 'Authorization': `Bearer ${token}` } });
+      const res = await fetch(`${API_BASE}/api/investments`, { headers: { 'Authorization': `Bearer ${token}` } });
       if (res.ok) {
         const data = await res.json();
         const mapped = (data.investments || []).map(inv => ({
@@ -275,7 +274,7 @@ export default function Dashboard({ onLogout }) {
     setSubmitLoading(true);
     try {
       const token = localStorage.getItem('grayscale_token');
-      const res = await fetch('/api/deposits', {
+      const res = await fetch(`${API_BASE}/api/deposits`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ amount: parseFloat(depositAmount), asset: depositAsset })
@@ -316,7 +315,7 @@ export default function Dashboard({ onLogout }) {
     setWithdrawSubmitLoading(true);
     try {
       const token = localStorage.getItem('grayscale_token');
-      const res = await fetch('/api/withdrawals', {
+      const res = await fetch(`${API_BASE}/api/withdrawals`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ amount: amt, asset: withdrawAsset, address: addr })
@@ -348,7 +347,7 @@ export default function Dashboard({ onLogout }) {
     triggerToast('Processing investment...');
     try {
       const token = localStorage.getItem('grayscale_token');
-      const res = await fetch('/api/investments/start', {
+      const res = await fetch(`${API_BASE}/api/investments/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ asset: investAsset, amount: amt })
@@ -373,7 +372,7 @@ export default function Dashboard({ onLogout }) {
     if (!confirm('Are you sure you want to withdraw this matured investment?')) return;
     try {
       const token = localStorage.getItem('grayscale_token');
-      const res = await fetch('/api/investments/withdraw', {
+      const res = await fetch(`${API_BASE}/api/investments/withdraw`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ investmentId: invId })
