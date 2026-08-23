@@ -348,6 +348,7 @@ export default function Dashboard({ onLogout }) {
     const amt = parseFloat(document.getElementById('invest-amount-input')?.value || 0);
     const assetObj = assets.find(a => a.id === investAsset);
     if (!amt || amt <= 0 || amt > (assetObj?.balance || 0)) return triggerToast('Invalid investment amount.');
+  if (amt < 500) return triggerToast('Minimum investment is $500');
     
     setInvestModalOpen(false);
     triggerToast('Processing investment...');

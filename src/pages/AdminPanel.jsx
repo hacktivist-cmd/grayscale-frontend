@@ -2,52 +2,37 @@ import { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, Users, ArrowUpRight, ArrowDownLeft, 
   Clock, Settings, LogOut, Search, Bell, Check, X, 
-  MoreHorizontal, UserPlus, CheckCircle2, FileText, 
-  PieChart, TrendingUp, Shield, Lock, Repeat, ChevronDown,
-  Eye, EyeOff, Home, ShieldCheck, Trash2, RefreshCw
+  UserPlus, CheckCircle2, Trash2, RefreshCw
 } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
-// ==========================
-// DEFAULT PRICES & CONFIG
-// ==========================
 const DEFAULT_PRICES = { BTC: 63120.50, ETH: 1895.20, SOL: 142.80, USDT: 1.00 };
 const ADMIN_CREDENTIALS = { email: 'gs@ingray.com', password: 'gtrade' };
 
 export default function AdminPanel({ onLogout }) {
-  // -------- STATE --------
   const [isAuthed, setIsAuthed] = useState(false);
   const [authEmail, setAuthEmail] = useState('gs@ingray.com');
   const [authPassword, setAuthPassword] = useState('');
   const [authError, setAuthError] = useState(false);
-  
   const [currentTab, setCurrentTab] = useState('dashboard');
   const [mobileTab, setMobileTab] = useState('dashboard');
   const [prices, setPrices] = useState(DEFAULT_PRICES);
 
-  // Data States
   const [users, setUsers] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
   const [deposits, setDeposits] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [investments, setInvestments] = useState([]);
-  
-  // UI States
   const [searchTerm, setSearchTerm] = useState('');
   const [toastMsg, setToastMsg] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
 
-  // Edit Modal State
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editUser, setEditUser] = useState(null);
   const [editForm, setEditForm] = useState({ wallet: 0, assets: {} });
-
-  // Add User Modal State
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [newUserForm, setNewUserForm] = useState({ fullname: '', username: '', email: '', password: '', usdt: 0 });
 
-  // -------- AUTHENTICATION --------
   useEffect(() => {
     const savedAuth = sessionStorage.getItem('grayscale_admin_auth');
     if (savedAuth === 'true') {
@@ -68,7 +53,6 @@ export default function AdminPanel({ onLogout }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Login failed');
-
       localStorage.setItem('grayscale_token', data.token);
       setIsAuthed(true);
       sessionStorage.setItem('grayscale_admin_auth', 'true');
@@ -89,7 +73,6 @@ export default function AdminPanel({ onLogout }) {
     triggerToast('Signed out of admin panel');
   };
 
-  // -------- DATA FETCH --------
   const fetchUsers = async () => {
     const token = localStorage.getItem('grayscale_token');
     if (!token || !isAuthed) return;
@@ -106,11 +89,9 @@ export default function AdminPanel({ onLogout }) {
           kycStatus: u.kyc_status || 'Pending',
           status: u.status || 'Active',
           walletBalance: u.balance_usd || 0,
-          assets: u.assets || [] // array of {symbol, holdings}
+          assets: u.assets || []
         }));
         setUsers(mapped);
-      } else {
-        console.warn('Failed to fetch users:', res.status);
       }
     } catch (err) { console.warn('Admin API unavailable.', err); }
   };
@@ -123,11 +104,8 @@ export default function AdminPanel({ onLogout }) {
       if (res.ok) {
         const data = await res.json();
         setWithdrawals(data.withdrawals || []);
-        console.log('Fetched withdrawals:', data.withdrawals);
-      } else {
-        console.warn('Failed to fetch withdrawals:', res.status);
       }
-    } catch (err) { console.warn('Failed to fetch withdrawals', err); }
+    } catch (err) { console.warn('Failed to fetch withdrawals'); }
   };
 
   const fetchDeposits = async () => {
@@ -138,11 +116,8 @@ export default function AdminPanel({ onLogout }) {
       if (res.ok) {
         const data = await res.json();
         setDeposits(data.deposits || []);
-        console.log('Fetched deposits:', data.deposits);
-      } else {
-        console.warn('Failed to fetch deposits:', res.status);
       }
-    } catch (err) { console.warn('Failed to fetch deposits', err); }
+    } catch (err) { console.warn('Failed to fetch deposits'); }
   };
 
   const fetchTransactions = async () => {
@@ -169,28 +144,30 @@ export default function AdminPanel({ onLogout }) {
     } catch (err) { console.warn('Failed to fetch investments'); }
   };
 
-  // Fetch users when 'users' tab is selected
+  // Fetch data when desktop tab changes
   useEffect(() => {
     if (currentTab === 'users') fetchUsers();
-  }, [currentTab]);
-
-  // Fetch other data when their tabs are selected
-  useEffect(() => {
     if (currentTab === 'withdrawals') fetchWithdrawals();
     if (currentTab === 'deposits') fetchDeposits();
     if (currentTab === 'transactions') fetchTransactions();
     if (currentTab === 'investments') fetchInvestments();
   }, [currentTab, isAuthed]);
 
-  // -------- HELPERS --------
+  // Fetch data when mobile tab changes (fix for mobile)
+  useEffect(() => {
+    if (mobileTab === 'users') fetchUsers();
+    if (mobileTab === 'withdrawals') fetchWithdrawals();
+    if (mobileTab === 'deposits') fetchDeposits();
+    if (mobileTab === 'transactions') fetchTransactions();
+    if (mobileTab === 'investments') fetchInvestments();
+  }, [mobileTab, isAuthed]);
+
   const triggerToast = (msg) => { setToastMsg(msg); setToastVisible(true); setTimeout(() => setToastVisible(false), 3500); };
   const formatUSD = (val) => val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  // -------- TABS --------
   const switchDesktopTab = (tab) => setCurrentTab(tab);
   const switchMobileTab = (tab) => setMobileTab(tab);
 
-  // -------- UPDATE STATUS FUNCTIONS --------
   const updateWithdrawalStatus = async (id, status) => {
     const token = localStorage.getItem('grayscale_token');
     try {
@@ -202,9 +179,7 @@ export default function AdminPanel({ onLogout }) {
       if (!res.ok) throw new Error('Failed to update withdrawal');
       triggerToast(`Withdrawal ${status}`);
       fetchWithdrawals();
-    } catch (err) {
-      triggerToast(err.message);
-    }
+    } catch (err) { triggerToast(err.message); }
   };
 
   const updateDepositStatus = async (id, status) => {
@@ -218,17 +193,12 @@ export default function AdminPanel({ onLogout }) {
       if (!res.ok) throw new Error('Failed to update deposit');
       triggerToast(`Deposit ${status}`);
       fetchDeposits();
-    } catch (err) {
-      triggerToast(err.message);
-    }
+    } catch (err) { triggerToast(err.message); }
   };
 
-  // -------- EDIT BALANCE & ASSETS --------
   const openEditModal = (user) => {
     const assetsObj = {};
-    (user.assets || []).forEach(a => {
-      assetsObj[a.symbol] = a.holdings;
-    });
+    (user.assets || []).forEach(a => { assetsObj[a.symbol] = a.holdings; });
     setEditUser(user);
     setEditForm({ wallet: user.walletBalance, assets: assetsObj });
     setEditModalOpen(true);
@@ -239,7 +209,6 @@ export default function AdminPanel({ onLogout }) {
     if (!editUser) return;
     const token = localStorage.getItem('grayscale_token');
     try {
-      // Update wallet balance
       const walletRes = await fetch(`${API_BASE}/api/admin/users/${editUser.id}/balance`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -247,11 +216,7 @@ export default function AdminPanel({ onLogout }) {
       });
       if (!walletRes.ok) throw new Error('Failed to update wallet balance');
 
-      // Update assets
-      const assetsPayload = Object.keys(editForm.assets).map(symbol => ({
-        symbol,
-        holdings: editForm.assets[symbol]
-      }));
+      const assetsPayload = Object.keys(editForm.assets).map(symbol => ({ symbol, holdings: editForm.assets[symbol] }));
       const assetsRes = await fetch(`${API_BASE}/api/admin/users/${editUser.id}/assets`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -262,12 +227,9 @@ export default function AdminPanel({ onLogout }) {
       triggerToast(`Wallet and portfolio updated for ${editUser.fullname}`);
       setEditModalOpen(false);
       fetchUsers();
-    } catch (err) {
-      triggerToast(err.message);
-    }
+    } catch (err) { triggerToast(err.message); }
   };
 
-  // -------- ADD USER --------
   const createNewUser = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem('grayscale_token');
@@ -278,12 +240,7 @@ export default function AdminPanel({ onLogout }) {
       const res = await fetch(`${API_BASE}/api/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({
-          firstName,
-          lastName,
-          email: newUserForm.email,
-          password: newUserForm.password,
-        })
+        body: JSON.stringify({ firstName, lastName, email: newUserForm.email, password: newUserForm.password })
       });
       if (!res.ok) throw new Error('Failed to create user');
       if (newUserForm.usdt > 0) {
@@ -299,12 +256,9 @@ export default function AdminPanel({ onLogout }) {
       setAddModalOpen(false);
       setNewUserForm({ fullname: '', username: '', email: '', password: '', usdt: 0 });
       fetchUsers();
-    } catch (err) {
-      triggerToast(err.message);
-    }
+    } catch (err) { triggerToast(err.message); }
   };
 
-  // -------- DELETE USER --------
   const deleteUser = async (userId) => {
     if (!confirm('Are you sure you want to permanently delete this user?')) return;
     const token = localStorage.getItem('grayscale_token');
@@ -316,12 +270,9 @@ export default function AdminPanel({ onLogout }) {
       if (!res.ok) throw new Error('Failed to delete user');
       triggerToast('User deleted permanently.');
       fetchUsers();
-    } catch (err) {
-      triggerToast(err.message);
-    }
+    } catch (err) { triggerToast(err.message); }
   };
 
-  // -------- SUSPEND / ACTIVATE --------
   const toggleUserStatus = async (userId, currentStatus) => {
     const newStatus = currentStatus === 'Active' ? 'Suspended' : 'Active';
     const token = localStorage.getItem('grayscale_token');
@@ -334,19 +285,15 @@ export default function AdminPanel({ onLogout }) {
       if (!res.ok) throw new Error('Failed to update status');
       triggerToast(`User status changed to ${newStatus}`);
       fetchUsers();
-    } catch (err) {
-      triggerToast(err.message);
-    }
+    } catch (err) { triggerToast(err.message); }
   };
 
-  // -------- FILTERS --------
   const filteredUsers = users.filter(u => 
     u.fullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // -------- RENDER HELPERS --------
   const getKYCClass = (status) => {
     if (status === 'Verified') return 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
     if (status === 'Pending') return 'bg-amber-500/20 text-amber-400 border border-amber-500/30';
@@ -358,7 +305,6 @@ export default function AdminPanel({ onLogout }) {
     return assets.reduce((sum, a) => sum + (a.holdings * (prices[a.symbol] || 0)), 0);
   };
 
-  // -------- AUTH OVERLAY --------
   if (!isAuthed) {
     return (
       <div className="min-h-screen bg-[#0c0a0f] flex items-center justify-center p-4 font-sans antialiased">
@@ -393,25 +339,22 @@ export default function AdminPanel({ onLogout }) {
     <div className="bg-[#0c0a0f] text-slate-100 font-sans antialiased selection:bg-purple-600 selection:text-white flex flex-col min-h-screen">
       {toastVisible && (
         <div className="fixed bottom-6 right-6 z-[120] px-5 py-3.5 rounded-2xl bg-[#1d1729] border border-purple-500/40 text-xs font-bold text-slate-100 shadow-2xl flex items-center gap-3">
-          <CheckCircle2 className="w-4.5 h-4.5 text-purple-400" />
+          <CheckCircle2 className="w-4 h-4 text-purple-400" />
           <span>{toastMsg}</span>
         </div>
       )}
 
-      {/* ================= DESKTOP APP ================= */}
+      {/* Desktop view */}
       <div className="hidden md:flex min-h-screen w-full">
-        {/* SIDEBAR */}
         <aside className="w-64 bg-[#0e0b13] border-r border-white/[0.07] flex flex-col justify-between flex-shrink-0 sticky top-0 h-screen z-30">
           <div>
             <div className="p-6 border-b border-white/[0.06] flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center font-black text-white text-base shadow-purple-glow">AD</div>
               <div><div className="flex items-center gap-1.5"><span className="text-sm font-extrabold tracking-wider text-white">ADMIN PANEL</span><span className="text-[9px] bg-purple-500/20 text-purple-400 font-bold px-1.5 py-0.5 rounded-md border border-purple-500/30">v2</span></div><p className="text-[10px] text-slate-400 font-medium">System Management</p></div>
             </div>
-            
             <div className="p-4 border-b border-slate-800/80">
               <div className="relative"><Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" /><input type="text" placeholder="Search users..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-slate-600" /></div>
             </div>
-
             <nav className="px-4 mt-6 space-y-1.5">
               {['dashboard','users','withdrawals','deposits','transactions','investments','settings'].map(tab => (
                 <button key={tab} onClick={() => switchDesktopTab(tab)} className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-bold transition-all ${currentTab === tab ? 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-purple-glow' : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'}`}>
@@ -427,7 +370,6 @@ export default function AdminPanel({ onLogout }) {
               ))}
             </nav>
           </div>
-
           <div className="p-4 border-t border-white/[0.06]">
             <button onClick={handleAdminLogout} className="w-full py-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80 text-xs font-semibold text-slate-400 hover:text-slate-200 hover:border-slate-700 transition-colors flex items-center justify-center gap-2">
               <LogOut className="w-3.5 h-3.5" /> Log Out
@@ -435,20 +377,15 @@ export default function AdminPanel({ onLogout }) {
           </div>
         </aside>
 
-        {/* MAIN CANVAS */}
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-16 px-6 border-b border-white/[0.06] bg-[#0c0a0f]/80 backdrop-blur-xl flex items-center justify-between sticky top-0 z-20">
-            <div className="flex items-center gap-2 md:hidden"><div className="w-7 h-7 rounded bg-purple-600 text-white flex items-center justify-center font-black text-xs">AD</div><span className="font-bold text-xs tracking-wider">ADMIN PANEL</span></div>
             <div></div>
             <div className="flex items-center gap-3">
               <button className="p-2 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-400 hover:text-white"><Bell className="w-4 h-4" /></button>
               <button onClick={handleAdminLogout} className="p-2 rounded-xl bg-white/10 text-slate-300 hover:text-white hover:bg-white/20 transition-colors"><LogOut className="w-4 h-4" /></button>
             </div>
           </header>
-
           <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto space-y-6">
-            
-            {/* ================= DASHBOARD TAB ================= */}
             {currentTab === 'dashboard' && (
               <div className="space-y-8">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -462,26 +399,15 @@ export default function AdminPanel({ onLogout }) {
                   </div>
                   <div className="p-5 rounded-2xl bg-[#15111b] border border-white/[0.08] space-y-2">
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total AUM (USD)</span>
-                    <div className="text-3xl font-extrabold text-purple-300 font-mono">
-                      ${formatUSD(users.reduce((sum, u) => sum + u.walletBalance, 0))}
-                    </div>
+                    <div className="text-3xl font-extrabold text-purple-300 font-mono">${formatUSD(users.reduce((sum, u) => sum + u.walletBalance, 0))}</div>
                   </div>
                   <div className="p-5 rounded-2xl bg-[#15111b] border border-white/[0.08] space-y-2">
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Pending Approvals</span>
                     <div className="text-3xl font-extrabold text-amber-400 font-mono">{withdrawals.filter(w => w.status === 'Pending').length + deposits.filter(d => d.status === 'Pending').length}</div>
                   </div>
                 </div>
-                <div className="p-6 rounded-2xl bg-[#15111b] border border-white/[0.08] space-y-4">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">System Status</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                    <div className="p-4 rounded-xl bg-black/40 border border-white/[0.08] flex items-center justify-between"><span className="text-slate-400">Vault Security Quorum</span><span className="text-emerald-400 font-bold flex items-center gap-2"><ShieldCheck className="w-4 h-4" /> 100% Cold</span></div>
-                    <div className="p-4 rounded-xl bg-black/40 border border-white/[0.08] flex items-center justify-between"><span className="text-slate-400">Last Audit</span><span className="text-white font-mono">Today, 04:00 UTC</span></div>
-                  </div>
-                </div>
               </div>
             )}
-
-            {/* ================= USERS TAB ================= */}
             {currentTab === 'users' && (
               <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -512,12 +438,8 @@ export default function AdminPanel({ onLogout }) {
                               <td className="py-4 px-5 text-center">
                                 <div className="flex items-center justify-center gap-1.5">
                                   <button onClick={() => openEditModal(u)} className="px-2.5 py-1.5 rounded-xl bg-purple-500/20 text-purple-300 hover:bg-purple-500 hover:text-white transition-all text-[10px] font-bold">Edit</button>
-                                  <button onClick={() => toggleUserStatus(u.id, u.status)} className="px-2.5 py-1.5 rounded-xl bg-white/10 text-slate-300 hover:bg-white/20 transition-all text-[10px] font-bold">
-                                    {u.status === 'Active' ? 'Suspend' : 'Activate'}
-                                  </button>
-                                  <button onClick={() => deleteUser(u.id)} className="px-2.5 py-1.5 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all text-[10px] font-bold">
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
+                                  <button onClick={() => toggleUserStatus(u.id, u.status)} className="px-2.5 py-1.5 rounded-xl bg-white/10 text-slate-300 hover:bg-white/20 transition-all text-[10px] font-bold">{u.status === 'Active' ? 'Suspend' : 'Activate'}</button>
+                                  <button onClick={() => deleteUser(u.id)} className="px-2.5 py-1.5 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all text-[10px] font-bold"><Trash2 className="w-3.5 h-3.5" /></button>
                                 </div>
                               </td>
                             </tr>
@@ -529,19 +451,13 @@ export default function AdminPanel({ onLogout }) {
                 </div>
               </div>
             )}
-
-            {/* ================= WITHDRAWALS TAB ================= */}
             {currentTab === 'withdrawals' && (
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div><h2 className="text-lg font-bold text-white">Withdrawal Requests</h2><p className="text-xs text-slate-400">Approve or reject pending withdrawals</p></div>
-                  <button onClick={fetchWithdrawals} className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-white flex items-center gap-2">
-                    <RefreshCw className="w-4 h-4" /> Refresh
-                  </button>
+                  <button onClick={fetchWithdrawals} className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-white flex items-center gap-2"><RefreshCw className="w-4 h-4" /> Refresh</button>
                 </div>
-                {withdrawals.length === 0 ? (
-                  <div className="p-6 rounded-2xl bg-[#15111b] border border-white/[0.08] text-center text-slate-400 text-sm italic">No withdrawal requests yet.</div>
-                ) : (
+                {withdrawals.length === 0 ? <div className="p-6 rounded-2xl bg-[#15111b] border border-white/[0.08] text-center text-slate-400 text-sm italic">No withdrawal requests yet.</div> : (
                   <div className="bg-[#15111b] border border-white/[0.08] rounded-2xl overflow-hidden">
                     <table className="w-full text-left"><thead className="bg-black/40 border-b border-white/[0.06]"><tr className="text-[11px] font-bold text-slate-400 uppercase tracking-wider"><th className="py-4 px-5">ID</th><th className="py-4 px-5">User</th><th className="py-4 px-5 text-right">Amount</th><th className="py-4 px-5">Asset</th><th className="py-4 px-5">Address</th><th className="py-4 px-5">Date</th><th className="py-4 px-5">Status</th><th className="py-4 px-5 text-center">Action</th></tr></thead><tbody className="divide-y divide-white/[0.04] text-xs">
                       {withdrawals.map(w => (
@@ -561,19 +477,13 @@ export default function AdminPanel({ onLogout }) {
                 )}
               </div>
             )}
-
-            {/* ================= DEPOSITS TAB ================= */}
             {currentTab === 'deposits' && (
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div><h2 className="text-lg font-bold text-white">Deposit Approvals</h2><p className="text-xs text-slate-400">Confirm incoming deposits</p></div>
-                  <button onClick={fetchDeposits} className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-white flex items-center gap-2">
-                    <RefreshCw className="w-4 h-4" /> Refresh
-                  </button>
+                  <button onClick={fetchDeposits} className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-white flex items-center gap-2"><RefreshCw className="w-4 h-4" /> Refresh</button>
                 </div>
-                {deposits.length === 0 ? (
-                  <div className="p-6 rounded-2xl bg-[#15111b] border border-white/[0.08] text-center text-slate-400 text-sm italic">No deposit requests yet.</div>
-                ) : (
+                {deposits.length === 0 ? <div className="p-6 rounded-2xl bg-[#15111b] border border-white/[0.08] text-center text-slate-400 text-sm italic">No deposit requests yet.</div> : (
                   <div className="bg-[#15111b] border border-white/[0.08] rounded-2xl overflow-hidden">
                     <table className="w-full text-left"><thead className="bg-black/40 border-b border-white/[0.06]"><tr className="text-[11px] font-bold text-slate-400 uppercase tracking-wider"><th className="py-4 px-5">ID</th><th className="py-4 px-5">User</th><th className="py-4 px-5 text-right">Amount</th><th className="py-4 px-5">Asset</th><th className="py-4 px-5">Date</th><th className="py-4 px-5">Status</th><th className="py-4 px-5 text-center">Action</th></tr></thead><tbody className="divide-y divide-white/[0.04] text-xs">
                       {deposits.map(d => (
@@ -592,14 +502,10 @@ export default function AdminPanel({ onLogout }) {
                 )}
               </div>
             )}
-
-            {/* ================= TRANSACTIONS TAB ================= */}
             {currentTab === 'transactions' && (
               <div className="space-y-6">
                 <div><h2 className="text-lg font-bold text-white">All Transactions</h2><p className="text-xs text-slate-400">Complete system transaction history</p></div>
-                {transactions.length === 0 ? (
-                  <div className="p-6 rounded-2xl bg-[#15111b] border border-white/[0.08] text-center text-slate-400 text-sm italic">No transactions recorded yet.</div>
-                ) : (
+                {transactions.length === 0 ? <div className="p-6 rounded-2xl bg-[#15111b] border border-white/[0.08] text-center text-slate-400 text-sm italic">No transactions recorded yet.</div> : (
                   <div className="bg-[#15111b] border border-white/[0.08] rounded-2xl overflow-hidden">
                     <table className="w-full text-left"><thead className="bg-black/40 border-b border-white/[0.06]"><tr className="text-[11px] font-bold text-slate-400 uppercase tracking-wider"><th className="py-4 px-5">ID</th><th className="py-4 px-5">Type</th><th className="py-4 px-5">User</th><th className="py-4 px-5">Asset</th><th className="py-4 px-5 text-right">Amount</th><th className="py-4 px-5">Date</th><th className="py-4 px-5">Status</th></tr></thead><tbody className="divide-y divide-white/[0.04] text-xs">
                       {transactions.map(t => (
@@ -618,15 +524,11 @@ export default function AdminPanel({ onLogout }) {
                 )}
               </div>
             )}
-
-            {/* ================= INVESTMENTS TAB ================= */}
             {currentTab === 'investments' && (
               <div className="space-y-6">
                 <div><h2 className="text-lg font-bold text-white">Active Vault Investments</h2><p className="text-xs text-slate-400">7-Day locked staking positions</p></div>
                 <div className="bg-[#15111b] border border-white/[0.08] rounded-2xl p-6 space-y-4">
-                  {investments.length === 0 ? (
-                    <p className="text-slate-400 text-sm italic text-center py-4">No active investments recorded yet.</p>
-                  ) : (
+                  {investments.length === 0 ? <p className="text-slate-400 text-sm italic text-center py-4">No active investments recorded yet.</p> : (
                     <div className="space-y-3">
                       {investments.map(inv => (
                         <div key={inv.id} className="p-4 rounded-2xl bg-black/40 border border-white/[0.08] flex items-center justify-between">
@@ -639,8 +541,6 @@ export default function AdminPanel({ onLogout }) {
                 </div>
               </div>
             )}
-
-            {/* ================= SETTINGS TAB ================= */}
             {currentTab === 'settings' && (
               <div className="max-w-2xl mx-auto space-y-6">
                 <h2 className="text-xl font-bold text-white uppercase tracking-wider">System Configuration</h2>
@@ -662,7 +562,7 @@ export default function AdminPanel({ onLogout }) {
         </div>
       </div>
 
-      {/* ================= MOBILE APP ================= */}
+      {/* Mobile view */}
       <div className="md:hidden min-h-screen w-full flex justify-center bg-[#0c0a0f]">
         <div className="w-full max-w-md bg-[#0a0e1a] min-h-screen flex flex-col relative border-x border-white/[0.08] shadow-2xl pb-24">
           <header className="px-5 pt-6 pb-4 flex items-center justify-between sticky top-0 bg-[#0a0e1a]/80 backdrop-blur-xl z-20 border-b border-white/[0.08]">
@@ -674,14 +574,11 @@ export default function AdminPanel({ onLogout }) {
           </header>
 
           <main className="flex-1 px-5 pt-4 space-y-6">
-            {/* Mobile Dashboard */}
             {mobileTab === 'dashboard' && (
               <div>
                 <div className="p-5 rounded-2xl bg-[#15111b] border border-white/[0.08] space-y-2">
                   <div className="text-xs text-slate-400 uppercase font-bold">Total AUM (USD)</div>
-                  <div className="text-3xl font-extrabold text-purple-300 font-mono">
-                    ${formatUSD(users.reduce((sum, u) => sum + u.walletBalance, 0))}
-                  </div>
+                  <div className="text-3xl font-extrabold text-purple-300 font-mono">${formatUSD(users.reduce((sum, u) => sum + u.walletBalance, 0))}</div>
                 </div>
                 <div className="grid grid-cols-2 gap-3 mt-4">
                   <div className="p-4 rounded-2xl bg-[#15111b] border border-white/[0.08]"><span className="text-xs text-slate-400 uppercase">Users</span><div className="text-xl font-bold text-white">{users.length}</div></div>
@@ -690,7 +587,6 @@ export default function AdminPanel({ onLogout }) {
               </div>
             )}
 
-            {/* Mobile Users */}
             {mobileTab === 'users' && (
               <div>
                 <div className="flex items-center justify-between mb-4"><h2 className="text-lg font-bold text-white">Users</h2><button onClick={() => setAddModalOpen(true)} className="px-3 py-1.5 rounded-xl bg-purple-600 text-white text-xs font-bold">Add</button></div>
@@ -716,12 +612,9 @@ export default function AdminPanel({ onLogout }) {
               </div>
             )}
 
-            {/* Mobile Withdrawals */}
             {mobileTab === 'withdrawals' && (
               <div><h2 className="text-lg font-bold text-white mb-4">Withdrawals</h2>
-                {withdrawals.length === 0 ? (
-                  <p className="text-slate-400 text-sm italic text-center py-4">No withdrawal requests.</p>
-                ) : (
+                {withdrawals.length === 0 ? <p className="text-slate-400 text-sm italic text-center py-4">No withdrawal requests.</p> : (
                   <div className="space-y-3">{withdrawals.slice(0,3).map(w => (
                     <div key={w.id} className="p-4 rounded-2xl bg-[#15111b] border border-white/[0.08] space-y-2">
                       <div className="flex justify-between"><span className="text-sm font-bold text-white">{w.user_name}</span><span className="text-sm font-mono text-slate-300">{w.amount}</span></div>
@@ -733,12 +626,9 @@ export default function AdminPanel({ onLogout }) {
               </div>
             )}
 
-            {/* Mobile Deposits */}
             {mobileTab === 'deposits' && (
               <div><h2 className="text-lg font-bold text-white mb-4">Deposits</h2>
-                {deposits.length === 0 ? (
-                  <p className="text-slate-400 text-sm italic text-center py-4">No deposit requests.</p>
-                ) : (
+                {deposits.length === 0 ? <p className="text-slate-400 text-sm italic text-center py-4">No deposit requests.</p> : (
                   <div className="space-y-3">{deposits.slice(0,3).map(d => (
                     <div key={d.id} className="p-4 rounded-2xl bg-[#15111b] border border-white/[0.08] space-y-2">
                       <div className="flex justify-between"><span className="text-sm font-bold text-white">{d.user_name}</span><span className="text-sm font-mono text-slate-300">{d.amount}</span></div>
@@ -750,12 +640,9 @@ export default function AdminPanel({ onLogout }) {
               </div>
             )}
 
-            {/* Mobile Activity */}
             {mobileTab === 'transactions' && (
               <div><h2 className="text-lg font-bold text-white mb-4">Activity</h2>
-                {transactions.length === 0 ? (
-                  <p className="text-slate-400 text-sm italic text-center py-4">No transactions yet.</p>
-                ) : (
+                {transactions.length === 0 ? <p className="text-slate-400 text-sm italic text-center py-4">No transactions yet.</p> : (
                   <div className="space-y-3">{transactions.slice(0,3).map(t => (
                     <div key={t.id} className="p-4 rounded-2xl bg-[#15111b] border border-white/[0.08] space-y-2">
                       <div className="flex justify-between"><span className="text-sm font-bold text-white">{t.type}</span><span className="text-sm font-mono text-slate-300">{t.amount}</span></div>
@@ -766,7 +653,19 @@ export default function AdminPanel({ onLogout }) {
               </div>
             )}
 
-            {/* Mobile Settings */}
+            {mobileTab === 'investments' && (
+              <div><h2 className="text-lg font-bold text-white mb-4">Investments</h2>
+                {investments.length === 0 ? <p className="text-slate-400 text-sm italic text-center py-4">No investments yet.</p> : (
+                  <div className="space-y-3">{investments.slice(0,3).map(inv => (
+                    <div key={inv.id} className="p-4 rounded-2xl bg-[#15111b] border border-white/[0.08] space-y-2">
+                      <div className="flex justify-between"><span className="text-sm font-bold text-white">{inv.asset}</span><span className="text-sm font-mono text-slate-300">${inv.amount_invested}</span></div>
+                      <div className="flex justify-between text-xs text-slate-400"><span>{inv.id}</span><span>+{inv.profit_percent || 30}%</span></div>
+                    </div>
+                  ))}</div>
+                )}
+              </div>
+            )}
+
             {mobileTab === 'settings' && (
               <div className="pb-24"><h2 className="text-xl font-bold text-white mb-4">Settings</h2>
                 <div className="bg-[#15111b] border border-white/[0.08] rounded-2xl p-6 space-y-4">
@@ -777,7 +676,6 @@ export default function AdminPanel({ onLogout }) {
             )}
           </main>
 
-          {/* Mobile Bottom Navigation */}
           <nav className="fixed bottom-0 max-w-md w-full bg-[#0a0e1a]/90 backdrop-blur-xl border-t border-white/[0.08] px-4 py-2 flex items-center justify-between z-30 shadow-2xl">
             <button onClick={() => switchMobileTab('dashboard')} className={`flex flex-col items-center gap-1 ${mobileTab === 'dashboard' ? 'text-purple-400 scale-105' : 'text-slate-500 hover:text-slate-300'}`}><Home className="w-5 h-5" /><span className="text-[10px] font-semibold">Home</span></button>
             <button onClick={() => switchMobileTab('users')} className={`flex flex-col items-center gap-1 ${mobileTab === 'users' ? 'text-purple-400 scale-105' : 'text-slate-500 hover:text-slate-300'}`}><Users className="w-5 h-5" /><span className="text-[10px] font-semibold">Users</span></button>
@@ -789,7 +687,7 @@ export default function AdminPanel({ onLogout }) {
         </div>
       </div>
 
-      {/* ================= EDIT USER MODAL (Wallet & Assets) ================= */}
+      {/* EDIT USER MODAL */}
       {editModalOpen && editUser && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100] flex items-center justify-center p-4">
           <div className="w-full max-w-lg p-6 space-y-5 rounded-2xl bg-[#15111b] border border-white/10 shadow-2xl relative">
@@ -808,10 +706,7 @@ export default function AdminPanel({ onLogout }) {
                   {['BTC', 'ETH', 'SOL', 'USDT'].map(symbol => (
                     <div key={symbol} className="flex items-center gap-2">
                       <span className="text-xs font-bold text-slate-300 w-10">{symbol}</span>
-                      <input type="number" step="any" value={editForm.assets[symbol] || 0} onChange={(e) => setEditForm(prev => ({
-                        ...prev,
-                        assets: { ...prev.assets, [symbol]: parseFloat(e.target.value) || 0 }
-                      }))} className="w-full bg-black/60 border border-white/15 rounded px-2 py-1 text-xs text-white font-mono outline-none focus:border-purple-500" />
+                      <input type="number" step="any" value={editForm.assets[symbol] || 0} onChange={(e) => setEditForm(prev => ({ ...prev, assets: { ...prev.assets, [symbol]: parseFloat(e.target.value) || 0 } }))} className="w-full bg-black/60 border border-white/15 rounded px-2 py-1 text-xs text-white font-mono outline-none focus:border-purple-500" />
                     </div>
                   ))}
                 </div>
@@ -823,7 +718,7 @@ export default function AdminPanel({ onLogout }) {
         </div>
       )}
 
-      {/* ================= ADD USER MODAL ================= */}
+      {/* ADD USER MODAL */}
       {addModalOpen && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100] flex items-center justify-center p-4">
           <div className="w-full max-w-lg p-6 space-y-5 rounded-2xl bg-[#15111b] border border-white/10 shadow-2xl relative">
