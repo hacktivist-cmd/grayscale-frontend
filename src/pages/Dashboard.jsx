@@ -11,7 +11,7 @@ import TradingViewWidget from '../components/TradingViewWidget';
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 // ==========================
-// DEFAULT STATE (0.00, Empty, Zero)
+// DEFAULT STATE
 // ==========================
 const DEFAULT_USER = { fullname: 'User', firstname: 'User', username: '@user', avatar: '', balance_usd: 0 };
 const DEFAULT_PRICES = { BTC: 63120.50, ETH: 1895.20, SOL: 142.80, USDT: 1.00 };
@@ -99,7 +99,8 @@ export default function Dashboard({ onLogout }) {
           username: `@${userData.email?.split('@')[0] || 'user'}`,
           email: userData.email,
           role: userData.role,
-          id: userData.id
+          id: userData.id,
+          avatar: userData.avatar || ''
         }));
         console.log('User info updated:', { firstName, lastName, fullname, email: userData.email });
       }
@@ -244,7 +245,6 @@ export default function Dashboard({ onLogout }) {
       if (!res.ok) throw new Error('Failed to execute trade');
       const data = await res.json();
       triggerToast(data.message);
-      // Refresh assets and transactions from backend
       await fetchAssetsAndBalance();
       await fetchTransactionsData();
     } catch (err) {
@@ -400,15 +400,28 @@ export default function Dashboard({ onLogout }) {
 
   const togglePrivacy = () => setIsPrivacyMasked(!isPrivacyMasked);
 
-  // -------- PROFILE PICTURE --------
-  const handleProfilePicUpload = (e) => {
+  // -------- PROFILE PICTURE (PERSISTENT VIA BACKEND) --------
+  const handleProfilePicUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const dataUrl = event.target.result;
-      setUser(prev => ({ ...prev, avatar: dataUrl }));
-      triggerToast('Profile picture updated!');
+      try {
+        const token = localStorage.getItem('grayscale_token');
+        const res = await fetch(`${API_BASE}/api/user/profile`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ avatar: dataUrl })
+        });
+        if (!res.ok) throw new Error('Failed to upload profile picture');
+        const data = await res.json();
+        setUser(prev => ({ ...prev, avatar: data.user.avatar }));
+        triggerToast('Profile picture updated!');
+      } catch (err) {
+        console.error('Profile picture upload error:', err);
+        triggerToast(err.message);
+      }
     };
     reader.readAsDataURL(file);
   };
