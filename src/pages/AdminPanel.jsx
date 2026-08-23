@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, Users, ArrowUpRight, ArrowDownLeft, 
   Clock, Settings, LogOut, Search, Bell, Check, X, 
-  UserPlus, CheckCircle2, Trash2, RefreshCw
+  UserPlus, CheckCircle2, Trash2, RefreshCw, TrendingUp
 } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
